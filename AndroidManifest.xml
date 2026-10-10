@@ -4,7 +4,7 @@
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="Pocket Arcade"
+        android:label="Brain &amp; Skill Games"
         android:theme="@android:style/Theme.DeviceDefault.NoActionBar"
         android:hardwareAccelerated="true">
 
