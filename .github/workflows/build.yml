@@ -1,0 +1,53 @@
+name: Build APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check all files are uploaded
+        run: |
+          for f in index.html three.min.js MainActivity.java AndroidManifest.xml build.gradle app-build.gradle settings.gradle gradle.properties icon.png; do
+            if [ ! -f "$f" ]; then
+              echo "::error::$f is missing from the repository. Upload it again."
+              exit 1
+            fi
+          done
+
+      - name: Put the files in the Android project layout
+        run: |
+          mkdir -p app/src/main/assets app/src/main/java/com/pocketarcade/app
+          cp index.html three.min.js app/src/main/assets/
+          cp MainActivity.java app/src/main/java/com/pocketarcade/app/
+          cp AndroidManifest.xml app/src/main/
+          cp app-build.gradle app/build.gradle
+          for d in mdpi hdpi xhdpi xxhdpi xxxhdpi; do
+            mkdir -p app/src/main/res/mipmap-$d
+            cp icon.png app/src/main/res/mipmap-$d/ic_launcher.png
+          done
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.9
+
+      - name: Build the APK
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Check the game is inside the APK
+        run: unzip -l app/build/outputs/apk/debug/app-debug.apk | grep "assets/index.html"
+
+      - name: Upload the APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: PocketArcade-APK
+          path: app/build/outputs/apk/debug/app-debug.apk
